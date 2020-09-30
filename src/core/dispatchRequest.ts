@@ -33,5 +33,6 @@ function transformHeaders(config: AxiosRequestConfig): any {
 
 function transformResponseData(res: AxiosResponse): AxiosResponse {
   res.data = transformResponse(res.data)
+
   return res
 }
