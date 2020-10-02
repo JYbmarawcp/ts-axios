@@ -1,4 +1,5 @@
-import { isPlainObject } from './utils'
+import { isPlainObject, deepMerge } from './utils'
+import { Method } from '../types'
 
 // header 属性是大小写不敏感的,例子中传入content-type需要规范化
 function normalizeHeaderName(headers: any, normalizedName: string): void {
@@ -44,4 +45,18 @@ export function parseHeaders(headers: string): any {
   })
 
   return parsed
+}
+
+export function flattenHeaders(headers: any, method: Method): any {
+  if (!headers) {
+    return headers
+  }
+  headers = deepMerge(headers.common || {}, headers[method] || {}, headers)
+
+  const methodsToDelete = ['delete', 'get', 'head', 'options', 'post', 'put', 'patch', 'common']
+  methodsToDelete.forEach(method => {
+    delete headers[method]
+  })
+
+  return headers
 }
