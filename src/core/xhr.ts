@@ -2,6 +2,7 @@ import { AxiosRequestConfig, AxiosPromise, AxiosResponse } from '../types'
 import { parseHeaders } from '../helpers/headers'
 import { createError } from '../helpers/error'
 import { isURLSameOrigin } from '../helpers/url'
+import { isFormData } from '../helpers/utils'
 import cookie from '../helpers/cookie'
 
 export default function xhr(config: AxiosRequestConfig): AxiosPromise {
@@ -16,22 +17,11 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
       cancelToken,
       withCredentials,
       xsrfCookieName,
-      xsrfHeaderName
+      xsrfHeaderName,
+      onDownloadProgress,
+      onUploadProgress
     } = config
     const request = new XMLHttpRequest()
-
-    if (responseType) {
-      request.responseType = responseType
-    }
-
-    if (timeout) {
-      request.timeout = timeout
-    }
-
-    // 为true则跨域请求可以携带cookie
-    if (withCredentials) {
-      request.withCredentials = withCredentials
-    }
 
     request.open(method.toUpperCase(), url!, true)
 
@@ -66,6 +56,19 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
       reject(createError(`Timeout of ${timeout} ms exceeded`, config, 'ECONNABORTED', request))
     }
 
+    // 下载
+    if (onDownloadProgress) {
+      request.onprogress = onDownloadProgress
+    }
+    // 上传
+    if (onUploadProgress) {
+      request.upload.onprogress = onUploadProgress
+    }
+    if (isFormData(data)) {
+      delete headers['Content-Type']
+    }
+
+    // XSRF 防御
     if ((withCredentials || isURLSameOrigin(url!)) && xsrfCookieName) {
       const xsrfValue = cookie.read(xsrfCookieName)
       if (xsrfValue && xsrfHeaderName) {
@@ -89,6 +92,21 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
     }
 
     request.send(data)
+
+    function configureRequest(): void {
+      if (responseType) {
+        request.responseType = responseType
+      }
+
+      if (timeout) {
+        request.timeout = timeout
+      }
+
+      // 为true则跨域请求可以携带cookie
+      if (withCredentials) {
+        request.withCredentials = withCredentials
+      }
+    }
 
     // 状态码
     function handleResponse(response: AxiosResponse): void {

@@ -1,5 +1,3 @@
-import { notStrictEqual } from 'assert'
-
 const toString = Object.prototype.toString
 
 // 类型谓词
@@ -15,6 +13,10 @@ export function isObject(val: any): val is Object {
 // 所以需要一个判断普通对象的函数
 export function isPlainObject(val: any): val is Object {
   return toString.call(val) === '[object Object]'
+}
+
+export function isFormData(val: any): val is FormData {
+  return typeof val !== 'undefined' && val instanceof FormData
 }
 
 // from中的属性都扩展到to中,包括原型上的属性
